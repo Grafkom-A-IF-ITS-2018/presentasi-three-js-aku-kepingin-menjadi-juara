@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Plane, Circle, Ring</title>
+    <script type="text/javascript" src="three.js"></script>
+    <script type="text/javascript" src="stats.js"></script>
+    <script type="text/javascript" src="dat.gui.js"></script>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<!-- <div id="Stats-output">
+</div> -->
+<!-- Div which will hold the Output -->
+<div id="WebGL-output">
+</div>
+
+<!-- Javascript code that runs our Three.js examples -->
+<script type="text/javascript">
+
+    // once everything is loaded, we run our Three.js stuff.
+    function init() {
+
+        var stats = initStats();
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        var webGLRenderer = new THREE.WebGLRenderer();
+        webGLRenderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
+        webGLRenderer.setSize(window.innerWidth, window.innerHeight);
+        webGLRenderer.shadowMapEnabled = true;
+
+        var plane = createMesh(new THREE.PlaneGeometry(10, 10, 4, 4));
+        scene.add(plane);
+
+        camera.position.x = 0;
+        camera.position.y = 0;
+        camera.position.z = 30;
+        // camera.lookAt(new THREE.Vector3(10, 0, 0));
+        document.getElementById("WebGL-output").appendChild(webGLRenderer.domElement);
+
+        var step = 0;
+        // setup the control gui
+        var controls = new function () {
+
+            //plane
+            this.width = 10;
+            this.height = 10;
+            this.widthSegments = 4;
+            this.heightSegments = 4;
+            //circle
+            this.radius = 4;
+            this.thetaStart = 0.3 * Math.PI * 2;
+            this.thetaLength = 0.3 * Math.PI * 2;
+            this.segments = 10;
+            //ring
+            this.innerRadius = 0;
+            this.outerRadius = 10;
+            this.thetaSegments = 8;
+            this.phiSegments = 8;
+            this.thetaStartt = 0;
+            this.thetaLengthh = Math.PI * 2;
+
+            this.type = 'Plane';
+
+            this.redraw = function () {
+                scene.remove(plane);
+                switch (controls.type) {
+                    case 'Plane':
+                        plane = createMesh(new THREE.PlaneGeometry(controls.width, controls.height, Math.round(controls.widthSegments), Math.round(controls.heightSegments)));
+                        break;
+                    case 'Circle':
+                        plane = createMesh(new THREE.CircleGeometry(controls.radius, controls.segments, controls.thetaStart, controls.thetaLength));
+                        break;
+                    case 'Ring':
+                        plane = createMesh(new THREE.RingGeometry(controls.innerRadius, controls.outerRadius, controls.thetaSegments, controls.phiSegments, controls.thetaStartt, controls.thetaLengthh));
+                        break;
+                }
+                scene.add(plane);
+            };
+        };
+
+        var gui = new dat.GUI();
+        gui.add(controls, 'type', ['Plane', 'Circle', 'Ring']).onChange(controls.redraw);
+        var fplane = gui.addFolder('Plane');
+        fplane.add(controls, 'width', 0, 40).onChange(controls.redraw);
+        fplane.add(controls, 'height', 0, 40).onChange(controls.redraw);
+        fplane.add(controls, 'widthSegments', 0, 10).onChange(controls.redraw);
+        fplane.add(controls, 'heightSegments', 0, 10).onChange(controls.redraw);
+        fplane.open();
+        var fcircle = gui.addFolder('Circle');
+        fcircle.add(controls, 'radius', 0, 40).onChange(controls.redraw);
+        fcircle.add(controls, 'segments', 0, 40).onChange(controls.redraw);
+        fcircle.add(controls, 'thetaStart', 0, 2 * Math.PI).onChange(controls.redraw);
+        fcircle.add(controls, 'thetaLength', 0, 2 * Math.PI).onChange(controls.redraw);
+        // fcircle.open();
+        var fring = gui.addFolder('Ring');
+        fring.add(controls, 'innerRadius', 0, 20).onChange(controls.redraw);
+        fring.add(controls, 'outerRadius', 0, 40).onChange(controls.redraw);
+        fring.add(controls, 'thetaSegments', 1, 40).step(1).onChange(controls.redraw);
+        fring.add(controls, 'phiSegments', 1, 20).step(1).onChange(controls.redraw);
+        fring.add(controls, 'thetaStartt', 0, Math.PI * 2).onChange(controls.redraw);
+        fring.add(controls, 'thetaLengthh', 0, Math.PI * 2).onChange(controls.redraw);
+        // fring.open();
+        render();
+
+        function createMesh(geom) {
+            var meshMaterial = new THREE.MeshNormalMaterial();
+            meshMaterial.side = THREE.DoubleSide;
+            var wireFrameMat = new THREE.MeshBasicMaterial();
+            wireFrameMat.wireframe = true;
+
+            var plane = THREE.SceneUtils.createMultiMaterialObject(geom, [meshMaterial, wireFrameMat]);
+
+            return plane;
+        }
+
+        function render() {
+            stats.update();
+
+            plane.rotation.y = step += 0.01;
+
+            // render using requestAnimationFrame
+            requestAnimationFrame(render);
+            webGLRenderer.render(scene, camera);
+        }
+
+        function initStats() {
+
+            var stats = new Stats();
+            // stats.setMode(0); // 0: fps, 1: ms
+
+            // Align top-left
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.left = '0px';
+            stats.domElement.style.top = '0px';
+
+            // document.getElementById("Stats-output").appendChild(stats.domElement);
+
+            return stats;
+        }
+    }
+    window.onload = init;
+</script>
+</body>
+</html>
