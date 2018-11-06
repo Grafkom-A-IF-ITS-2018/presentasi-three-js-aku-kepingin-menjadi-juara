@@ -3,7 +3,7 @@
 <html>
 
 <head>
-    <title>Cylinder</title>
+    <title>Torus Knot</title>
     <script type="text/javascript" src="three.js"></script>
 
     <script type="text/javascript" src="stats.js"></script>
@@ -40,13 +40,13 @@
 
         // create a render and set the size
         var webGLRenderer = new THREE.WebGLRenderer();
-        webGLRenderer.setClearColor(new THREE.Color(0x222222, 1.0));
+        webGLRenderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
         webGLRenderer.setSize(window.innerWidth, window.innerHeight);
         webGLRenderer.shadowMapEnabled = true;
 
-        var cylinder = createMesh(new THREE.CylinderGeometry(20, 20, 20, 8, 8, false));
+        var knot = createMesh(new THREE.TorusKnotGeometry(10, 1, 64, 8, 2, 3, 1));
         // add the sphere to the scene
-        scene.add(cylinder);
+        scene.add(knot);
 
         // position and point the camera to the center of the scene
         camera.position.x = -30;
@@ -64,34 +64,33 @@
         // setup the control gui
         var controls = new function () {
             // we need the first child, since it's a multimaterial
-
-            this.radiusTop = 20;
-            this.radiusBottom = 20;
-            this.height = 20;
-
-            this.radialSegments = 8;
-            this.heightSegments = 8;
-
-            this.openEnded = false;
+            this.radius = knot.children[0].geometry.parameters.radius;
+            this.tube = 0.3;
+            this.radialSegments = knot.children[0].geometry.parameters.radialSegments;
+            this.tubularSegments = knot.children[0].geometry.parameters.tubularSegments;
+            this.p = knot.children[0].geometry.parameters.p;
+            this.q = knot.children[0].geometry.parameters.q;
+            this.heightScale = knot.children[0].geometry.parameters.heightScale;
 
             this.redraw = function () {
                 // remove the old plane
-                scene.remove(cylinder);
+                scene.remove(knot);
                 // create a new one
 
-                cylinder = createMesh(new THREE.CylinderGeometry(controls.radiusTop, controls.radiusBottom, controls.height, controls.radialSegments, controls.heightSegments, controls.openEnded));
+                knot = createMesh(new THREE.TorusKnotGeometry(controls.radius, controls.tube, Math.round(controls.radialSegments), Math.round(controls.tubularSegments), Math.round(controls.p), Math.round(controls.q), controls.heightScale));
                 // add it to the scene.
-                scene.add(cylinder);
+                scene.add(knot);
             };
         };
 
         var gui = new dat.GUI();
-        gui.add(controls, 'radiusTop', -40, 40).onChange(controls.redraw);
-        gui.add(controls, 'radiusBottom', -40, 40).onChange(controls.redraw);
-        gui.add(controls, 'height', 0, 40).onChange(controls.redraw);
-        gui.add(controls, 'radialSegments', 1, 20).step(1).onChange(controls.redraw);
-        gui.add(controls, 'heightSegments', 1, 20).step(1).onChange(controls.redraw);
-        gui.add(controls, 'openEnded').onChange(controls.redraw);
+        gui.add(controls, 'radius', 0, 40).onChange(controls.redraw);
+        gui.add(controls, 'tube', 0, 40).onChange(controls.redraw);
+        gui.add(controls, 'radialSegments', 0, 400).step(1).onChange(controls.redraw);
+        gui.add(controls, 'tubularSegments', 1, 20).step(1).onChange(controls.redraw);
+        gui.add(controls, 'p', 1, 100).step(1).onChange(controls.redraw);
+        gui.add(controls, 'q', 1, 100).step(1).onChange(controls.redraw);
+        gui.add(controls, 'heightScale', 0, 5).onChange(controls.redraw);
 
 
         render();
@@ -99,15 +98,11 @@
         function createMesh(geom) {
 
             // assign two materials
-            var meshMaterial = new THREE.MeshNormalMaterial();
+            var meshMaterial = new THREE.MeshNormalMaterial({});
             meshMaterial.side = THREE.DoubleSide;
-            var wireFrameMat = new THREE.MeshBasicMaterial();
-            wireFrameMat.wireframe = true;
 
             // create a multimaterial
-            //var mesh = THREE.SceneUtils.createMultiMaterialObject(geom, [meshMaterial, wireFrameMat]);
-
-            var mesh = new THREE.Mesh( geom, meshMaterial ) ;
+            var mesh = THREE.SceneUtils.createMultiMaterialObject(geom, [meshMaterial]);
 
             return mesh;
         }
@@ -115,7 +110,7 @@
         function render() {
             stats.update();
 
-            cylinder.rotation.y = step += 0.01;
+            knot.rotation.y = step += 0.01;
 
             // render using requestAnimationFrame
             requestAnimationFrame(render);

@@ -3,7 +3,7 @@
 <html>
 
 <head>
-    <title>Cylinder</title>
+    <title>Torus</title>
     <script type="text/javascript" src="three.js"></script>
 
     <script type="text/javascript" src="stats.js"></script>
@@ -40,13 +40,13 @@
 
         // create a render and set the size
         var webGLRenderer = new THREE.WebGLRenderer();
-        webGLRenderer.setClearColor(new THREE.Color(0x222222, 1.0));
+        webGLRenderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
         webGLRenderer.setSize(window.innerWidth, window.innerHeight);
         webGLRenderer.shadowMapEnabled = true;
 
-        var cylinder = createMesh(new THREE.CylinderGeometry(20, 20, 20, 8, 8, false));
+        var torus = createMesh(new THREE.TorusGeometry(10, 10, 8, 6, Math.PI * 2));
         // add the sphere to the scene
-        scene.add(cylinder);
+        scene.add(torus);
 
         // position and point the camera to the center of the scene
         camera.position.x = -30;
@@ -65,33 +65,29 @@
         var controls = new function () {
             // we need the first child, since it's a multimaterial
 
-            this.radiusTop = 20;
-            this.radiusBottom = 20;
-            this.height = 20;
-
-            this.radialSegments = 8;
-            this.heightSegments = 8;
-
-            this.openEnded = false;
+            this.radius = torus.children[0].geometry.parameters.radius;
+            this.tube = torus.children[0].geometry.parameters.tube;
+            this.radialSegments = torus.children[0].geometry.parameters.radialSegments;
+            this.tubularSegments = torus.children[0].geometry.parameters.tubularSegments;
+            this.arc = torus.children[0].geometry.parameters.arc;
 
             this.redraw = function () {
                 // remove the old plane
-                scene.remove(cylinder);
+                scene.remove(torus);
                 // create a new one
 
-                cylinder = createMesh(new THREE.CylinderGeometry(controls.radiusTop, controls.radiusBottom, controls.height, controls.radialSegments, controls.heightSegments, controls.openEnded));
+                torus = createMesh(new THREE.TorusGeometry(controls.radius, controls.tube, Math.round(controls.radialSegments), Math.round(controls.tubularSegments), controls.arc));
                 // add it to the scene.
-                scene.add(cylinder);
+                scene.add(torus);
             };
         };
 
         var gui = new dat.GUI();
-        gui.add(controls, 'radiusTop', -40, 40).onChange(controls.redraw);
-        gui.add(controls, 'radiusBottom', -40, 40).onChange(controls.redraw);
-        gui.add(controls, 'height', 0, 40).onChange(controls.redraw);
-        gui.add(controls, 'radialSegments', 1, 20).step(1).onChange(controls.redraw);
-        gui.add(controls, 'heightSegments', 1, 20).step(1).onChange(controls.redraw);
-        gui.add(controls, 'openEnded').onChange(controls.redraw);
+        gui.add(controls, 'radius', 0, 40).onChange(controls.redraw);
+        gui.add(controls, 'tube', 0, 40).onChange(controls.redraw);
+        gui.add(controls, 'radialSegments', 0, 40).onChange(controls.redraw);
+        gui.add(controls, 'tubularSegments', 1, 20).onChange(controls.redraw);
+        gui.add(controls, 'arc', 0, Math.PI * 2).onChange(controls.redraw);
 
 
         render();
@@ -105,9 +101,7 @@
             wireFrameMat.wireframe = true;
 
             // create a multimaterial
-            //var mesh = THREE.SceneUtils.createMultiMaterialObject(geom, [meshMaterial, wireFrameMat]);
-
-            var mesh = new THREE.Mesh( geom, meshMaterial ) ;
+            var mesh = THREE.SceneUtils.createMultiMaterialObject(geom, [meshMaterial, wireFrameMat]);
 
             return mesh;
         }
@@ -115,7 +109,7 @@
         function render() {
             stats.update();
 
-            cylinder.rotation.y = step += 0.01;
+            torus.rotation.y = step += 0.01;
 
             // render using requestAnimationFrame
             requestAnimationFrame(render);
